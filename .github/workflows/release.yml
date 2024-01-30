@@ -37,14 +37,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
   
-    - name: Build and push all image variations
-      run: |
-        make image-push
-        TAG="${TAG}-amd64" TARGET_PLATFORMS=linux/amd64 make image-push
-        TAG="${TAG}-arm64" TARGET_PLATFORMS=linux/arm64 make image-push
-      env:
-        TAG: ${{ github.ref_name }}
-        REPO: ${{ vars.PUBLIC_REGISTRY }}/${{ vars.PUBLIC_REGISTRY_REPO }}
+    # - name: Build and push all image variations
+    #   run: |
+    #     make image-push
+    #     TAG="${TAG}-amd64" TARGET_PLATFORMS=linux/amd64 make image-push
+    #     TAG="${TAG}-arm64" TARGET_PLATFORMS=linux/arm64 make image-push
+    #   env:
+    #     TAG: ${{ github.ref_name }}
+    #     REPO: ${{ vars.PUBLIC_REGISTRY }}/${{ vars.PUBLIC_REGISTRY_REPO }}
 
     - run: make upload-gh
       env:
