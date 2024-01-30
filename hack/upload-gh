@@ -27,8 +27,8 @@ function checksum_file(){
 
 function upload_files(){
     arch=$1
-    echo gh release upload "${TAG}" "${BASE_DIR}/cis-operator-${arch}"
-    echo gh release upload "${TAG}" "${BASE_DIR}/sha256sum-${arch}.txt"
+    gh release upload "${TAG}" "${BASE_DIR}/cis-operator-${arch}"
+    gh release upload "${TAG}" "${BASE_DIR}/sha256sum-${arch}.txt"
 }
 
 function main()
