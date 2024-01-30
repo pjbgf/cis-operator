@@ -14,6 +14,9 @@ IMAGE = $(REPO)/cis-operator:$(TAG)
 TARGET_BIN ?= build/bin/cis-operator
 ARCH ?= $(shell docker info --format '{{.ClientInfo.Arch}}')
 
+# TARGET_ARCHS defines all GOARCH used for releasing binaries.
+TARGET_ARCHS = arm64 amd64
+
 .DEFAULT_GOAL := ci
 ci: build test validate e2e ## run the targets needed to validate a PR in CI.
 
@@ -28,6 +31,10 @@ test: ## run unit tests.
 build: ## build project and output binary to TARGET_BIN.
 	CGO_ENABLED=0 $(GO) build -trimpath -tags "$(GO_TAGS)" -ldflags "$(LINKFLAGS)" -o $(TARGET_BIN)
 
+build-artefacts:
+	
+	TARGET_BIN=build/bin/cis-operator-arm64 GOARCH=arm64 GOOS=linux $(MAKE) build
+
 image-build: buildx-machine ## build (and load) the container image targeting the current platform.
 	$(IMAGE_BUILDER) build -f package/Dockerfile \
 		--builder $(MACHINE) $(IMAGE_ARGS) \
@@ -40,17 +47,17 @@ image-push: buildx-machine ## build the container image targeting all platforms 
 		--build-arg VERSION=$(VERSION) --platform=$(TARGET_PLATFORMS) -t "$(IMAGE)" --push .
 	@echo "Pushed $(IMAGE)"
 
-e2e: $(K3D) $(KUBECTL) image-build
+e2e: $(K3D) $(KUBECTL) image-build ## Run E2E tests.
 	K3D=$(K3D) KUBECTL=$(KUBECTL) VERSION=$(VERSION) \
 	IMAGE=$(IMAGE) SECURITY_SCAN_VERSION=$(SECURITY_SCAN_VERSION) \
 	SONOBUOY_VERSION=$(SONOBUOY_VERSION) CORE_DNS_VERSION=$(CORE_DNS_VERSION) \
 	KLIPPER_HELM_VERSION=$(KLIPPER_HELM_VERSION) \
 		./hack/e2e
 
-generate:
+generate: ## Run code generation logic.
 	$(GO) generate ./...
 
-validate: validate-lint generate validate-dirty
+validate: validate-lint generate validate-dirty ## Run validation checks.
 
 validate-lint: $(GOLANGCI)
 	$(GOLANGCI) run
@@ -62,3 +69,14 @@ ifdef DIRTY
 	@git --no-pager diff
 	@exit 1
 endif
+
+upload: clean ## Build and upload artefacts to the GitHub release.
+	$(MAKE) $(addsuffix -upload, $(TARGET_ARCHS))
+
+%-upload:
+	TARGET_BIN=build/bin/cis-operator-$(subst :,/,$*) \
+	GOARCH=$(subst :,/,$*) GOOS=linux \
+		$(MAKE) build
+
+	TAG=$(TAG) \
+		./hack/upload-gh $(subst :,/,$*)
