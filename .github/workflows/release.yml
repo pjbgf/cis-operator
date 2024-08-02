@@ -34,6 +34,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
   
+    - run: make upload
+      env:
+          GH_TOKEN: ${{ github.token }}
+
     - name: Load Secrets from Vault
       uses: rancher-eio/read-vault-secrets@main
       with:
@@ -60,7 +64,3 @@ jobs:
         prime-repo: rancher
         prime-username: ${{ env.PRIME_REGISTRY_USERNAME }}
         prime-password: ${{ env.PRIME_REGISTRY_PASSWORD }}
-
-    - run: make upload
-      env:
-          GH_TOKEN: ${{ github.token }}
