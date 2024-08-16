@@ -48,7 +48,7 @@ jobs:
       matrix:
         # Works on macos-12, but takes a very long time to run so this
         # is currently disabled.
-        platform: [ubuntu-latest]
+        platform: [ubuntu-latest,macos-12]
   
     runs-on: ${{ matrix.platform }}
     needs: [ validate ]
